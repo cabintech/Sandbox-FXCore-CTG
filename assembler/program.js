@@ -42,9 +42,41 @@ class Program {
         return new Date();
     }
 
-    static Asm_it() {
+    static async Asm_it() {
         debugLog('Starting Asm_it() method', 'info');
         debugLog(`Source code available: ${FXCoreAssembler.sourceCode ? 'YES' : 'NO'}`, 'info');
+		
+		//------ Preprocess source code for macros and TOON statements
+		const { FXCoreMP } = await import('./fxcoremp-js/FXCoreMP.js'); // Since this code is not a JS module, FXCoreMP must be dynamically loaded
+		
+		let mpResults = await FXCoreMP.process(FXCoreAssembler.sourceCode, {
+			[FXCoreMP.OPTION_ANNOTATE]: false,					// Do not annotate TOON-generated assembler statements with original TOON source
+			[FXCoreMP.OPTION_VERBOSE]: "info",					// Show normal output
+			[FXCoreMP.OPTION_SOURCE_NAME]: Program.filename,	// Name of source file
+			[FXCoreMP.OPTION_SOURCE_PATH]: "",					//TODO: Do we have a directory for the source?
+			[FXCoreMP.OPTION_INCLUDE_PATH]: "",					//TODO: Nowhere to load $include files
+			[FXCoreMP.OPTION_ENV]: {}							//TODO: Provide UI for user to specify macro ENV name/values
+		});
+		
+		//console.log("FXCoreMP Results:\n",mpResults);
+
+		if (mpResults[FXCoreMP.RESULTS_STATUS] != "success") {
+			// Show errror msgs and stop here
+			debug.error(mpResults[FXCoreMP.RESULTS_MSGS], 'FXCOREMP');
+			return false;
+		}
+		
+		debugLog('Macro/TOON expansion completed successfully', 'success');
+		if (mpResults[FXCoreMP.RESULTS_MSGS].length > 0) {
+			console.log("show msgs");
+			debugLog(mpResults[FXCoreMP.RESULTS_MSGS], 'always', 'FXCoreMP'); // Show in UI
+		}
+
+		debugLog(mpResults[FXCoreMP.RESULTS_SUMMARY]); // Show macro/TOON summary messages in log
+
+		FXCoreAssembler.sourceCode = mpResults[FXCoreMP.RESULTS_OUTPUT]; // This is the new source for subsequent tooling
+		//------ End preprocess source code for macros and TOON statements
+		
 
         const myfxcore = new FXCoreIC(); // declare the IC and its properties
         const data = new Array(4098).fill(0);
@@ -233,6 +265,7 @@ class FXCoreAssembler {
     static sourceCode = null;
 
     static init() {
+		alert("here init");
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
 
@@ -265,16 +298,18 @@ class FXCoreAssembler {
     }
 
     static selectFile() {
+		alert("here selectFile");
         document.getElementById('fileInput').click();
     }
 
     static handleFileSelect(file) {
-        const validExtensions = ['.fxc', '.fxo'];
+        const validExtensions = ['.fxc', '.fxo', '.toon', '.fxc-mp', '.fxm'];
         const fileName = file.name.toLowerCase();
+		alert("Hee with: "+fileName);
         const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
 
         if (!hasValidExtension) {
-            debugLog('Error: Invalid file type. Please select a .fxc or .fxo file.', 'errors');
+            debugLog('Error: Invalid file type. Please select a ${validExtensions.join(', ')} file.', 'errors');
             return;
         }
 

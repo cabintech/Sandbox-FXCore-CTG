@@ -328,7 +328,7 @@ async function loadExample(exampleName) {
     }
 }
 
-function assembleFXCore() {
+async function assembleFXCore() {
     if (!editor) {
         debugLog('Editor not initialized', 'errors');
         return;
@@ -353,7 +353,7 @@ function assembleFXCore() {
             FXCoreAssembler.assembledHex = null;
             FXCoreAssembler.assembledCHeader = null; // Clear previous C header
 
-            const assembleSuccess = Program.Asm_it();
+            const assembleSuccess = await Program.Asm_it();
 
             if (assembleSuccess && FXCoreAssembler.assembledHex) {
                 assembledData = FXCoreAssembler.assembledHex;
@@ -392,7 +392,7 @@ function assembleFXCore() {
         updatePlainHexButton(); // Update the plain HEX download button
 
     } catch (error) {
-        debugLog('Assembly error: ' + error.message, 'errors');
+        debugLog('Assembly error: ' + error, 'errors');
         debugLog('FXCoreAssembler class not found', 'errors');
 
         // Clear data on error

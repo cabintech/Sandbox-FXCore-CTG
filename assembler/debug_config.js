@@ -39,6 +39,7 @@ class DebugConfig {
             info: true,               // Basic info messages
             success: true,            // success messages
             serial: true,             // serial debug messages
+			always: true,             // Messages that cannot be disabled	
             
             // Special categories
             all: false,               // Enable all debug output
@@ -64,14 +65,14 @@ class DebugConfig {
             } else if (level === 'none') {
                 // Disable all debug levels except errors
                 Object.keys(this.levels).forEach(key => {
-                    if (key !== 'errors' && key !== 'all') {
+                    if (key !== 'errors' && key != 'always' && key !== 'all') {
                         this.levels[key] = false;
                     }
                 });
                 this.levels.none = true;
                 this.levels.all = false;
             } else if (this.levels.hasOwnProperty(level)) {
-                this.levels[level] = enabled;
+				this.levels[level] = enabled;
             } else {
                 console.warn(`Unknown debug level: ${level}`);
             }
@@ -102,6 +103,8 @@ class DebugConfig {
      * @returns {boolean} Whether to show debug output
      */
     shouldLog(level) {
+		if (level == 'always') return true;
+		
         // If 'none' is set, only show errors and warnings
         if (this.levels.none && level !== 'errors' && level !== 'warnings') {
             return false;
@@ -263,6 +266,7 @@ function debugLog(message, level = 'info', prefix = '') {
     }
     
     // Only add to messages area if debug level should be shown AND we have DOM access
+	console.log("shouldLog level "+level+" = " +DEBUG.shouldLog(level));
     if (DEBUG.shouldLog(level) && typeof document !== 'undefined') {
         const messagesArea = document.getElementById('messages');
         if (messagesArea) {
@@ -273,6 +277,7 @@ function debugLog(message, level = 'info', prefix = '') {
                 'success': 'success',
                 'serial': 'success',
                 'info': 'info',
+				'always': 'info',
                 'verbose': 'info',
                 'showTokens': 'info',
                 'showResolution': 'info',

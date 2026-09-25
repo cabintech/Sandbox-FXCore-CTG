@@ -37,6 +37,7 @@ class Assembler {
      */
     
  assemble(sourceCode) {
+	
     let linecount = 0;
     let pc = 0;
     let retval = true;
